@@ -1,0 +1,9 @@
+# Local storage for registry and local setup
+data/
+.env
+
+# Python environments
+.ve/
+
+# Python
+__pycache__

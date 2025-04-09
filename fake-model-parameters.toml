@@ -1,0 +1,294 @@
+# Time ranges for the fake corpus.
+start_date = 2015-01-01T00:00:00
+end_date = 2025-03-01T00:00:00
+
+###############
+#
+# This section contains all the parameters to do with creating organisations.
+#
+###############
+[orgs]
+
+# If an organisation is not a reporting org then we won't generate
+# datasets, org files, or complete other IATI fields, such as an org-id.
+# We also don't grow reporting orgs.
+reporting_org_chance = 90
+
+# Percentages of organisations that have contact addresses, phone numbers
+# and fax numbers
+address_chance = 80
+phone_chance = 20
+fax_chance = 5
+
+# Reporting organisations grow according to an exponential model, reaching
+# some maximum final size over a couple of growth timescales.
+# The actual growth timescale is drawn from a uniform distribution
+# between these limits.
+growth_timescale_min = 50.0
+growth_timescale_max = 500.0
+
+# Proportions of reporting types.
+source_types = {primary_source = 1744, secondary_source = 30}
+
+# Period over which organisation data is typically updated in the CRM (not an org XML file).
+update_period =  365.0
+
+#
+# These weights control how often different countries will appear in the fake corpus.
+#
+[orgs.countries]
+"AE" = 5
+"AF" = 11
+"AM" = 2
+"AR" = 2
+"AT" = 7
+"AU" = 8
+"BD" = 38
+"BE" = 107
+"BF" = 6
+"BG" = 1
+"BI" = 5
+"BJ" = 32
+"BO" = 2
+"BR" = 10
+"BW" = 2
+"CA" = 31
+"CD" = 10
+"CF" = 2
+"CH" = 63
+"CI" = 2
+"CM" = 1
+"CN" = 2
+"CO" = 18
+"CR" = 1
+"CY" = 1
+"CZ" = 1
+"DE" = 23
+"DK" = 30
+"EC" = 1
+"EG" = 4
+"ES" = 9
+"ET" = 24
+"FI" = 8
+"FR" = 23
+"GB" = 611
+"GE" = 3
+"GH" = 37
+"GR" = 1
+"GT" = 1
+"HK" = 4
+"ID" = 25
+"IE" = 10
+"IL" = 2
+"IM" = 2
+"IN" = 41
+"IQ" = 1
+"IT" = 15
+"JO" = 25
+"JP" = 2
+"KE" = 86
+"KH" = 2
+"KR" = 1
+"KW" = 2
+"LA" = 1
+"LB" = 19
+"LK" = 4
+"LR" = 2
+"LT" = 1
+"LU" = 1
+"MG" = 1
+"ML" = 12
+"MM" = 1
+"MU" = 5
+"MW" = 18
+"MX" = 5
+"MY" = 8
+"MZ" = 14
+"NA" = 2
+"NE" = 2
+"NG" = 36
+"NI" = 1
+"NL" = 232
+"NO" = 10
+"NP" = 30
+"NZ" = 1
+"PA" = 1
+"PE" = 6
+"PH" = 3
+"PK" = 27
+"PL" = 2
+"PS" = 9
+"PT" = 1
+"PY" = 1
+"RO" = 1
+"RW" = 14
+"SA" = 2
+"SD" = 3
+"SE" = 14
+"SG" = 2
+"SI" = 1
+"SK" = 2
+"SL" = 1
+"SN" = 3
+"SO" = 31
+"SS" = 7
+"SV" = 1
+"SY" = 1
+"SZ" = 1
+"TG" = 1
+"TH" = 2
+"TN" = 4
+"TR" = 5
+"TW" = 1
+"TZ" = 25
+"UA" = 6
+"UG" = 50
+"US" = 237
+"VE" = 1
+"VN" = 3
+"YE" = 15
+"ZA" = 42
+"ZM" = 7
+"ZW" = 9
+
+#
+# These weights control how often different organisation types
+# will appear in the fake corpus.
+#
+[orgs.types]
+"Government" = 105
+"Local Government" = 74
+"International NGO" = 809
+"National NGO" = 562
+"Regional NGO" = 54
+"Public Private Partnership" = 13
+"Multilateral" = 65
+"Foundation" = 97
+"Private Sector" = 324
+"Academic Training and Research" = 271
+
+#
+# These weights control how often different licenses appear
+# in the fake corpus.
+#
+[orgs.licenses]
+"other-open" = 1324
+"cc-by" = 2899
+"odc-pddl" = 448
+"uk-ogl" = 189
+"notspecified" = 155
+"odc-by" = 1315
+"cc-zero" = 2035
+"other-pd" = 324
+"odc-odbl" = 93
+"other-at" = 2324
+"cc-by-sa" = 186
+"other-nc" = 2
+"gfdl" = 3
+"cc-nc" = 3
+
+#
+# This block contains parameters organised by the final size of an organisation.
+#
+[orgs.by_final_size]
+sizes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+
+# Weights for how frequently we get organisations of different sizes.
+weights = [1971, 270, 81, 23, 13, 5, 3, 1, 1, 1, 1]
+
+# Some reporting orgs only have admin users but this depends
+# on the size of the organisation.  Smaller organisations tend
+# to only have admin users.
+# admin_only_chances = [100, 89, 80, 65, 62, 60, 50, 2, 0, 0, 0]
+
+# Weights for the proportions of different capacity users.  Smaller
+# organisations tend to have more admin staff.
+capacity_weights = [{admin = 1.0, editor = 0.0, member = 0.0},
+                    {admin = 0.80, editor = 0.1, member = 0.1},
+                    {admin = 0.80, editor = 0.1, member = 0.1},
+                    {admin = 0.6, editor = 0.15, member = 0.15},
+                    {admin = 0.6, editor = 0.15, member = 0.15},
+                    {admin = 0.6, editor = 0.15, member = 0.15},
+                    {admin = 0.5, editor = 0.25, member = 0.25},
+                    {admin = 0.2, editor = 0.4, member = 0.4},
+                    {admin = 0.2, editor = 0.4, member = 0.4},
+                    {admin = 0.1, editor = 0.45, member = 0.45},
+                    {admin = 0.1, editor = 0.45, member = 0.45}
+                    ]
+
+# Chance that an editor will be a multiple organisation person.
+multi_org_editor = [0, 10, 20, 10, 10, 0, 0, 0, 0, 0, 0]
+
+###############
+#
+# This section contains all the variables to do with users.
+#
+###############
+[users]
+
+# Generate a number of users who are editors of multiple organisations.
+# This is done in proprtion, so if this variable is 0.1 then if we have 10
+# organisations we will have 1 user who is a member of multiple organisations.
+multi_org_users = 0.1
+
+# Chance that a user is subscribed to the mailing list.
+mailing_list_chance = 80
+
+#
+# This section gives the waiting times (in days) for organisational churn.
+#
+[users.leaving_waiting_times]
+admin = 2190
+editor = 1095
+member = 1095
+
+
+###############
+#
+# This section contains all the variables to do with datasets.
+#
+###############
+[datasets]
+
+#
+# Parameters for organisation datasets
+#
+[datasets.org]
+
+# Proportion of reporting orgs that do not have an org XML file.
+has_org_file_chance = 70.0
+
+# Period over which organisation XML file data is updated in the CRM.
+update_period = 365.0
+
+#
+# Parameters for activity datasets
+#
+[datasets.activity]
+# Period over which dataset XML file data is updated in the CRM.
+update_period = 365.0
+
+# Of those updates, what fraction are changes to the URL?
+url_update_chance = 20
+
+# These parameters control how many datasets an organisation has.
+# The first three are weights for whether an organisation has
+# 0, 1 or >=2 datasets.  The final two are the parameters of a
+# Pareto distribution for the number of datasets >=2.
+num_weight_zero = 55
+num_weight_one = 1333
+num_weight_twoormore = 6512
+num_pareto_x_m = 2
+num_pareto_alpha = 2.0
+
+###############
+#
+# This section contains all the variables to do with actions.
+#
+###############
+[actions]
+
+# Weights for different user agents making changes to the registry.
+[actions.user_agents]
+"Register Your Data" = 1000
+"Some Third Party Tool" = 1000

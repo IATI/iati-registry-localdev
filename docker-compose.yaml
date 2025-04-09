@@ -1,0 +1,41 @@
+name: iati-dev-registry
+
+services:
+  crmdb:
+    container_name: iati-dev-registry-crm-db
+    image: mariadb:latest
+    ports:
+      - ${DB_CRM_PORT}:${DB_CRM_PORT}
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_CRM_ROOT_PASSWORD}
+      MARIADB_DATABASE: "suitecrm"
+      MARIADB_USER: ${DB_CRM_USER}
+      MARIADB_PASSWORD: ${DB_CRM_PASS}
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: ${DB_CRM_HEALTHCHECK_INTERVAL}
+      timeout: ${DB_CRM_HEALTHCHECK_TIMEOUT}
+      retries: ${DB_CRM_HEALTHCKECK_RETRIES}
+    volumes:
+      - "${DB_CRM_LOCAL_PATH}:/var/lib/mysql/"
+
+  crm:
+    container_name: iati-dev-registry-crm
+    image: docker.io/bitnami/suitecrm:7
+    ports:
+      - ${CRM_PUBLIC_PORT}:8080
+      - ${CRM_PUBLIC_SSL_PORT}:8443
+    environment:
+      SUITECRM_USERNAME: ${CRM_USER}
+      SUITECRM_PASSWORD: ${CRM_PASS}
+      SUITECRM_DATABASE_HOST: iati-dev-registry-crm-db
+      SUITECRM_DATABASE_PORT_NUMBER: ${DB_CRM_PORT}
+      SUITECRM_DATABASE_NAME: "suitecrm"
+      SUITECRM_DATABASE_USER: ${DB_CRM_USER}
+      SUITECRM_DATABASE_PASSWORD: ${DB_CRM_PASS}
+    volumes:
+      - "$CRM_LOCAL_PATH:/bitnami/suitecrm"
+    depends_on:
+      crmdb:
+        condition: service_healthy
