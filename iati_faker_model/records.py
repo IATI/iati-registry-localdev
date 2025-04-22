@@ -85,23 +85,23 @@ class FakeOrg:
         self.people = []
         self.people_capacity = []
         self.datasets = []
-        self.name = None
-        self.short_name = None
-        self.default_license_id = None
-        self.ui_url = None
-        self.url = None
-        self.org_type = None
-        self.exclusions_url = None
-        self.iati_id = None
-        self.contact_email = None
-        self.source_type = None
-        self.country = None
-        self.address = None
-        self.phone = None
-        self.fax = None
-        self.description = None
+        self.name = ""
+        self.short_name = ""
+        self.default_license_id = ""
+        self.ui_url = ""
+        self.url = ""
+        self.org_type = ""
+        self.exclusions_url = ""
+        self.iati_id = ""
+        self.contact_email = ""
+        self.source_type = ""
+        self.country = ""
+        self.address = ""
+        self.phone = ""
+        self.fax = ""
+        self.description = ""
         self.is_reporter = False
-        self.locale = None
+        self.locale = ""
 
     def __str__(self):
         return (
@@ -144,10 +144,10 @@ class FakePerson:
         self.leaving_waiting_time = leaving_waiting_time
         self.inactive_date = None
 
-        self.short_user_name = None
-        self.name = None
-        self.email = None
-        self.mailing_list = None
+        self.short_user_name = ""
+        self.name = ""
+        self.email = ""
+        self.mailing_list = False
 
     def __str__(self):
         return (
@@ -188,10 +188,10 @@ class FakeDataset:
         self.creator_id = creator_id
         self.reporting_org_id = reporting_org_id
 
-        self.license_id = None
-        self.source_type = None
-        self.title = None
-        self.url = None
+        self.license_id = ""
+        self.source_type = ""
+        self.title = ""
+        self.url = ""
 
     def __str__(self):
         return (

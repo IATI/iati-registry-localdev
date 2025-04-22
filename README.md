@@ -52,7 +52,7 @@ python fakeiati.py -n 10
 The full list of arguments to this tool are:
 
 ```
-usage: FakeIATI [-h] [-n int] [-s int] [--no-suitecrm bool] [-p str] [--safe-emails bool] [--safe-urls bool]
+usage: FakeIATI [-h] [-n int] [-s int] [--no-suitecrm bool] [-p str] [--safe-emails bool] [--safe-urls bool] [--fake-uuids bool]
 
 Generate a fake corpus of IATI data for development and testing
 
@@ -64,9 +64,10 @@ options:
   -p str              Filename of a model parameter TOML file
   --safe-emails bool  Generate safe email addresses
   --safe-urls bool    Generate safe urls
-```
+  --fake-uuids bool   Generate clearly fake UUIDs for records
+``` 
 
-The safe email and URL options will only generate from domains such as `example.org` to avoid the risk of traffic being sent to real URLs or email addresses in testing.
+The `--safe-emails` and `--safe-urls` options will only generate from domains such as `example.org` to avoid the risk of traffic being sent to real URLs or email addresses in testing, and `--fake-uuids` will generate UUIDs with the first 8 characters set to a string to facilitate testing.
 
 ### Configuration
 

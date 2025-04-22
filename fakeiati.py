@@ -61,15 +61,16 @@ def generate_csv_suitecrm(corpus):
         fh.write(
             '"Name","ID","Website","Description","Date Created","Short Name","Data Portal URL",'
             '"Reporting Source Type","HQ Country","Default Publishing Licence","IATI Organisation Type",'
-            '"IATI Identifier","Address","Exclusions Policy URL","Email Address","Office Phone","Fax"\n'
+            '"IATI Identifier","Address","Exclusions Policy URL","Email Address",'
+            '"Office Phone","Fax","Approved to publish"\n'
         )
         for id in corpus.orgs:
             org = corpus.orgs[id]
-            fh.write(f'"{org.name}",{id},{org.url},"{org.description}",{org.created},')
-            fh.write(f'"{org.short_name}",{org.ui_url},{org.source_type},{org.country},')
-            fh.write(f"{org.default_license_id},{org.org_type},{org.iati_id},")
-            fh.write(f'"{org.address}",{org.exclusions_url},{org.contact_email},')
-            fh.write(f"{org.phone},{org.fax}\n")
+            created = org.created.strftime("%Y-%m-%d %H:%M:%S")
+            fh.write(f'"{org.name}",{id},{org.url},"{org.description}",{created},{org.short_name},{org.ui_url},')
+            fh.write(f'"{org.source_type}","{org.country}","{org.default_license_id}","{org.org_type}",')
+            fh.write(f'{org.iati_id},"{org.address}",{org.exclusions_url},{org.contact_email},')
+            fh.write(f'{org.phone},{org.fax},{"1" if org.is_reporter else "0"}\n')
 
     with open("suitecrm_people.csv", "w") as fh:
         fh.write(
@@ -79,9 +80,10 @@ def generate_csv_suitecrm(corpus):
         for id in corpus.people:
             person = corpus.people[id]
             person_org_id = ""
+            created = person.created.strftime("%Y-%m-%d %H:%M:%S")
             if len(corpus.people_org_mapping[id]) > 0:
                 person_org_id = corpus.people_org_mapping[id][0]
-            fh.write(f'"{person.name}",{id},{person.email},{person.created},')
+            fh.write(f'"{person.name}",{id},{person.email},{created},')
             fh.write(f'"{person.in_person_name}",{person.preferred_language},')
             fh.write(f"{person.country},{person.online_name},")
             fh.write(f'"{1 if person.mailing_list else 0}", {person_org_id}\n')
@@ -100,7 +102,7 @@ def generate_csv_suitecrm(corpus):
             fh.write(f"{dataset.reporting_org_id},{dataset.creator_id}\n")
 
     with open("suitecrm_org_actions.csv", "w") as fh:
-        fh.write('"ID","Date Created","Action Type","User Application","People ID","Organisation ID"\n')
+        fh.write('"ID","Date Created","Action Type","User Application","Changed By Id","Changed Organisation Id"\n')
         for id in corpus.org_actions:
             action = corpus.org_actions[id]
             created = action.created.strftime("%Y-%m-%d %H:%M:%S")
@@ -110,7 +112,7 @@ def generate_csv_suitecrm(corpus):
             )
 
     with open("suitecrm_dataset_actions.csv", "w") as fh:
-        fh.write('"ID","Date Created","Action Type","User Application","People ID","IATI Datasets ID"\n')
+        fh.write('"ID","Date Created","Action Type","User Application","Action Performed By Id","Dataset Changed Id"\n')
         for id in corpus.dataset_actions:
             action = corpus.dataset_actions[id]
             created = action.created.strftime("%Y-%m-%d %H:%M:%S")
