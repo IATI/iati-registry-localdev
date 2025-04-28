@@ -22,7 +22,7 @@ services:
 
   crm:
     container_name: iati-dev-registry-crm
-    image: docker.io/bitnami/suitecrm:7
+    build: ./
     ports:
       - ${CRM_PUBLIC_PORT}:8080
       - ${CRM_PUBLIC_SSL_PORT}:8443

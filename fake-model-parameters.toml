@@ -165,7 +165,7 @@ update_period =  365.0
 "Multilateral" = 65
 "Foundation" = 97
 "Private Sector" = 324
-"Academic Training and Research" = 271
+"Academic, Training and Research" = 271
 
 #
 # These weights control how often different licenses appear
@@ -195,11 +195,6 @@ sizes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
 # Weights for how frequently we get organisations of different sizes.
 weights = [1971, 270, 81, 23, 13, 5, 3, 1, 1, 1, 1]
-
-# Some reporting orgs only have admin users but this depends
-# on the size of the organisation.  Smaller organisations tend
-# to only have admin users.
-# admin_only_chances = [100, 89, 80, 65, 62, 60, 50, 2, 0, 0, 0]
 
 # Weights for the proportions of different capacity users.  Smaller
 # organisations tend to have more admin staff.
