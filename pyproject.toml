@@ -5,7 +5,7 @@ authors = [{name="IATI Secretariat", email="support@iatistandard.org"}]
 version = "0.1.0"
 requires-python = ">= 3.12.6"
 readme = "README.md"
-license = {file = "LICENSE"}
+license = {file = "LICENSE.txt"}
 dependencies = [
     "faker",
     "pycountry",
