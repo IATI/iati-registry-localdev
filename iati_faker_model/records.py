@@ -149,6 +149,11 @@ class FakePerson:
         self.email = ""
         self.mailing_list = False
 
+        self.in_person_name = ""
+        self.online_name = ""
+        self.preferred_language = ""
+        self.country = ""
+
         self.first_registration_use_cases = []
 
     def __str__(self):
