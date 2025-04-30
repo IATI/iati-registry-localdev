@@ -149,6 +149,8 @@ class FakePerson:
         self.email = ""
         self.mailing_list = False
 
+        self.first_registration_use_cases = []
+
     def __str__(self):
         return (
             f"Person <{self.id}>: capacity={self.capacity} created={self.created} inactive_date={self.inactive_date}"

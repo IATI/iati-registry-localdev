@@ -27,6 +27,7 @@ for locale in faker.config.AVAILABLE_LOCALES:
 class FakeCorpus:
 
     CAPACITY_CHOICES = ["admin", "editor", "member"]
+    FIRST_REGISTRATION_USE_CASE_CHOICES = ["reporting", "membership", "api_access", "community"]
 
     def __init__(
         self,
@@ -244,6 +245,10 @@ class FakeCorpus:
         person.email = self.faker[locale].ascii_safe_email() if self.safe_emails else self.faker[locale].ascii_email()
         person.mailing_list = self.faker.boolean(
             chance_of_getting_true=self.parameters["users"]["mailing_list_chance"]
+        )
+        person.first_registration_use_cases = self.rnd.sample(
+            self.FIRST_REGISTRATION_USE_CASE_CHOICES,
+            k=self.rnd.randint(0,3)
         )
 
         self.people_org_mapping[id] = []
