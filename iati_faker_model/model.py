@@ -277,10 +277,13 @@ class FakeCorpus:
         org.country = locale[3:]
         if self.faker.boolean(chance_of_getting_true=self.parameters["orgs"]["address_chance"]):
             org.address = self.faker[locale].address()
-        if self.faker.boolean(chance_of_getting_true=self.parameters["orgs"]["phone_chance"]):
-            org.phone = self.faker[locale].phone_number()
-        if self.faker.boolean(chance_of_getting_true=self.parameters["orgs"]["fax_chance"]):
-            org.fax = self.faker[locale].phone_number()
+        try:
+            if self.faker.boolean(chance_of_getting_true=self.parameters["orgs"]["phone_chance"]):
+                org.phone = self.faker[locale].phone_number()
+            if self.faker.boolean(chance_of_getting_true=self.parameters["orgs"]["fax_chance"]):
+                org.fax = self.faker[locale].phone_number()
+        except AttributeError as err:
+            pass
 
         if make_reporting:
             org.short_name = (org.name[:3].lower() + org.name[-3:].lower()).replace(" ", "")
