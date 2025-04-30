@@ -60,6 +60,14 @@ class FakeCorpus:
             print(f"Cannot load parameters TOML file: {err}")
             raise
 
+        # Remove countries from the configuration for which there isn't a Faker provider.
+        countries_to_remove = []
+        for country_code in self.parameters["orgs"]["countries"]:
+            if country_code not in COUNTRY_LOCALE_MAPPING:
+                countries_to_remove.append(country_code)
+        [self.parameters["orgs"]["countries"].pop(x) for x in countries_to_remove]
+        print("Countries not available in faker removed: ", countries_to_remove)
+
         # Unpack some of the model parameters - these are mostly dictionaries
         # that need separating into two lists for calling random.choices().
         self.org_countries = list(self.parameters["orgs"]["countries"].keys())
