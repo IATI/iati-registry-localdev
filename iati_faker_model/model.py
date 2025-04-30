@@ -12,14 +12,16 @@ import faker
 from .random import org_id, pareto, poisson, uniform_dates, uuid4
 from .records import FakeDataset, FakeDatasetAction, FakeOrg, FakeOrgAction, FakePerson
 
-# Get a mapping from countries to locales.
+# Get a mapping from countries to locales.  We manually remove
+# "dk_DK" as dk does not seem to be an ISO 639-1 language code.
 COUNTRY_LOCALE_MAPPING = {}
 for locale in faker.config.AVAILABLE_LOCALES:
-    if len(locale) > 2:
-        country = locale[3:]
-        if country not in COUNTRY_LOCALE_MAPPING.keys():
-            COUNTRY_LOCALE_MAPPING[country] = []
-        COUNTRY_LOCALE_MAPPING[country].append(locale)
+    if locale[:2] != "dk":
+        if len(locale) > 2:
+            country = locale[3:]
+            if country not in COUNTRY_LOCALE_MAPPING.keys():
+                COUNTRY_LOCALE_MAPPING[country] = []
+            COUNTRY_LOCALE_MAPPING[country].append(locale)
 
 
 class FakeCorpus:
