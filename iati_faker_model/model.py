@@ -8,6 +8,7 @@ import uuid
 from datetime import datetime, timedelta
 
 import faker
+import pycountry
 
 from .random import org_id, pareto, poisson, uniform_dates, uuid4
 from .records import FakeDataset, FakeDatasetAction, FakeOrg, FakeOrgAction, FakePerson
@@ -236,12 +237,15 @@ class FakeCorpus:
         while len(short_user_name) < 6:
             short_user_name += self.faker["en_GB"].words(1)[0]
         person.short_user_name = short_user_name
-
         person.name = self.faker[locale].name()
         person.in_person_name = self.faker[locale].first_name()
         person.online_name = person.in_person_name
-        person.preferred_language = locale[:2]
-        person.country = locale[3:]
+
+        person.preferred_language = pycountry.languages.get(alpha_2=locale[:2]).name
+        person.country_code = locale[3:]
+        person.country = pycountry.countries.get(alpha_2=person.country_code).name
+        person.locale = locale
+
         person.email = self.faker[locale].ascii_safe_email() if self.safe_emails else self.faker[locale].ascii_email()
         person.mailing_list = self.faker.boolean(
             chance_of_getting_true=self.parameters["users"]["mailing_list_chance"]

@@ -8,6 +8,7 @@ readme = "README.md"
 license = {file = "LICENSE"}
 dependencies = [
     "faker",
+    "pycountry",
 ]
 
 [project.optional-dependencies]

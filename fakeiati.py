@@ -85,7 +85,7 @@ def generate_csv_suitecrm(corpus):
                 person_org_id = corpus.people_org_mapping[id][0]
             fh.write(f'"{person.name}",{id},{person.email},{created},')
             fh.write(f'"{person.in_person_name}",{person.preferred_language},')
-            fh.write(f"{person.country},{person.online_name},")
+            fh.write(f"{person.country_code},{person.online_name},")
             fh.write(f'"{1 if person.mailing_list else 0}", {person_org_id}\n')
 
     with open("suitecrm_datasets.csv", "w") as fh:
