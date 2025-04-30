@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 
 import faker
 import pycountry
+import pytz
 
 from .random import org_id, pareto, poisson, uniform_dates, uuid4
 from .records import FakeDataset, FakeDatasetAction, FakeOrg, FakeOrgAction, FakePerson
@@ -245,6 +246,7 @@ class FakeCorpus:
         person.country_code = locale[3:]
         person.country = pycountry.countries.get(alpha_2=person.country_code).name
         person.locale = locale
+        person.time_zone = self.rnd.choice(pytz.country_timezones[person.country_code])
 
         person.email = self.faker[locale].ascii_safe_email() if self.safe_emails else self.faker[locale].ascii_email()
         person.mailing_list = self.faker.boolean(

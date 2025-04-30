@@ -9,6 +9,7 @@ license = {file = "LICENSE"}
 dependencies = [
     "faker",
     "pycountry",
+    "pytz"
 ]
 
 [project.optional-dependencies]

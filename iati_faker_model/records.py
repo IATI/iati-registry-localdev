@@ -155,6 +155,7 @@ class FakePerson:
         self.country = ""
         self.country_code = ""
         self.locale = ""
+        self.time_zone = ""
         self.first_registration_use_cases = []
 
     def __str__(self):
