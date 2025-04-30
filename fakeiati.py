@@ -124,7 +124,9 @@ def generate_csv_suitecrm(corpus):
             )
 
     with open("suitecrm_dataset_actions.csv", "w") as fh:
-        fh.write('"ID","Date Created","Action Type","User Application","Action Performed By Id","Dataset Changed Id"\n')
+        fh.write(
+            '"ID","Date Created","Action Type","User Application","Action Performed By Id","Dataset Changed Id"\n'
+        )
         for id in corpus.dataset_actions:
             action = corpus.dataset_actions[id]
             created = action.created.strftime("%Y-%m-%d %H:%M:%S")
@@ -133,26 +135,29 @@ def generate_csv_suitecrm(corpus):
                 f"{action.person_id},{action.dataset_id}\n"
             )
 
+
 def generate_identity_migration(corpus):
     data = []
     for id in corpus.people:
         person = corpus.people[id]
         created = person.created.strftime("%Y-%m-%d %H:%M:%S")
-        data.append({
-            "fullName": person.name,
-            "email": person.email,
-            "created": created,
-            "crmId": id,
-            "locale": person.locale,
-            "country": person.country,
-            "timeZone": person.time_zone,
-            "userType": "reporter" if len(corpus.people_org_mapping[id])>0 else "standard",
-            "inPersonName": person.in_person_name,
-            "onlineName": person.online_name,
-            "mailingList": person.mailing_list,
-            "preferredLanguage": person.preferred_language,
-            "registrationUseCases": person.first_registration_use_cases
-        })
+        data.append(
+            {
+                "fullName": person.name,
+                "email": person.email,
+                "created": created,
+                "crmId": id,
+                "locale": person.locale,
+                "country": person.country,
+                "timeZone": person.time_zone,
+                "userType": "reporter" if len(corpus.people_org_mapping[id]) > 0 else "standard",
+                "inPersonName": person.in_person_name,
+                "onlineName": person.online_name,
+                "mailingList": person.mailing_list,
+                "preferredLanguage": person.preferred_language,
+                "registrationUseCases": person.first_registration_use_cases,
+            }
+        )
     with open("wso2_users.json", "w") as fh:
         json.dump(data, fh, indent=4)
 

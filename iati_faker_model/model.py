@@ -55,9 +55,50 @@ class FakeCorpus:
             Generate fake UUIDs that can be clearly spotted as fake.
         """
 
+        self._load_and_process_config(parameters_filename)
+
+        # This is where we store the corpus.
+        self.orgs = collections.OrderedDict({})
+        self.people = collections.OrderedDict({})
+        self.people_org_mapping = {}
+        self.datasets = collections.OrderedDict({})
+        self.dataset_actions = collections.OrderedDict({})
+        self.org_actions = collections.OrderedDict({})
+        self.multi_org_people_ids = []
+
+        # Map countries in the model setup file to locale codes.
+        self.locales = []
+        for country in self.org_countries:
+            if country in COUNTRY_LOCALE_MAPPING:
+                for locale in COUNTRY_LOCALE_MAPPING[country]:
+                    self.locales.append(locale)
+
+        # Setup random number and faking generators.
+        faker.Faker.seed(seed)
+        self.faker = faker.Faker(self.locales)
+        self.rnd = random.Random()
+        self.rnd.seed(seed)
+        self.seed = seed
+
+        self._random_uuid = lambda rnd: str(uuid.UUID(int=rnd.getrandbits(128), version=4))
+        if fake_uuids:
+            self._random_uuid = lambda rnd: uuid4(rnd)
+
+        # Runtime options.
+        self.safe_urls = safe_urls
+        self.safe_emails = safe_emails
+
+    def _load_and_process_config(self, filename: str):
+        """Load the configuration TOML file and process the data
+
+        Parameters
+        ----------
+        filename : str
+            Filename to load.
+        """
         # Load the model parameters.
         try:
-            fh = open(parameters_filename, "rb")
+            fh = open(filename, "rb")
             self.parameters = tomllib.load(fh)
         except Exception as err:
             print(f"Cannot load parameters TOML file: {err}")
@@ -93,37 +134,6 @@ class FakeCorpus:
         ]
         self.user_agents = list(self.parameters["actions"]["user_agents"].keys())
         self.user_agent_weights = list(self.parameters["actions"]["user_agents"].values())
-
-        # This is where we store the corpus.
-        self.orgs = collections.OrderedDict({})
-        self.people = collections.OrderedDict({})
-        self.people_org_mapping = {}
-        self.datasets = collections.OrderedDict({})
-        self.dataset_actions = collections.OrderedDict({})
-        self.org_actions = collections.OrderedDict({})
-        self.multi_org_people_ids = []
-
-        # Map countries in the model setup file to locale codes.
-        self.locales = []
-        for country in self.org_countries:
-            if country in COUNTRY_LOCALE_MAPPING:
-                for locale in COUNTRY_LOCALE_MAPPING[country]:
-                    self.locales.append(locale)
-
-        # Setup random number and faking generators.
-        faker.Faker.seed(seed)
-        self.faker = faker.Faker(self.locales)
-        self.rnd = random.Random()
-        self.rnd.seed(seed)
-        self.seed = seed
-
-        self._random_uuid = lambda rnd: str(uuid.UUID(int=rnd.getrandbits(128), version=4))
-        if fake_uuids:
-            self._random_uuid = lambda rnd: uuid4(rnd)
-
-        # Runtime options.
-        self.safe_urls = safe_urls
-        self.safe_emails = safe_emails
 
     def _random_locale(self) -> str:
         """Randomly select a locale
@@ -253,8 +263,7 @@ class FakeCorpus:
             chance_of_getting_true=self.parameters["users"]["mailing_list_chance"]
         )
         person.first_registration_use_cases = self.rnd.sample(
-            self.FIRST_REGISTRATION_USE_CASE_CHOICES,
-            k=self.rnd.randint(0,3)
+            self.FIRST_REGISTRATION_USE_CASE_CHOICES, k=self.rnd.randint(0, 3)
         )
 
         self.people_org_mapping[id] = []
@@ -293,7 +302,7 @@ class FakeCorpus:
                 org.phone = self.faker[locale].phone_number()
             if self.faker.boolean(chance_of_getting_true=self.parameters["orgs"]["fax_chance"]):
                 org.fax = self.faker[locale].phone_number()
-        except AttributeError as err:
+        except AttributeError:
             pass
 
         if make_reporting:
