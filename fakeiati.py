@@ -2,6 +2,7 @@
 
 import argparse
 import csv
+import itertools
 import json
 
 from iati_faker_model import FakeCorpus
@@ -60,7 +61,11 @@ def main():
 
     if not args.no_suitecrm:
         print("Generating CSV files for SuiteCRM... ", end="")
-        generate_csv_suitecrm(corpus)
+        generate_csv_suitecrm_orgs(corpus)
+        generate_csv_suitecrm_people(corpus)
+        generate_csv_suitecrm_datasets(corpus)
+        generate_csv_suitecrm_org_actions(corpus)
+        generate_csv_suitecrm_dataset_actions(corpus)
         print("done.")
 
     if not args.no_wso2:
@@ -69,7 +74,7 @@ def main():
         print("done.")
 
 
-def generate_csv_suitecrm(corpus):
+def generate_csv_suitecrm_orgs(corpus):
     with open("suitecrm_orgs.csv", "w") as fh:
         field_names = [
             "ID",
@@ -127,6 +132,8 @@ def generate_csv_suitecrm(corpus):
 
             writer.writerow(data)
 
+
+def generate_csv_suitecrm_people(corpus):
     with open("suitecrm_people.csv", "w") as fh:
         field_names = [
             "ID",
@@ -159,6 +166,8 @@ def generate_csv_suitecrm(corpus):
             }
             writer.writerow(data)
 
+
+def generate_csv_suitecrm_datasets(corpus):
     with open("suitecrm_datasets.csv", "w") as fh:
         field_names = [
             "ID",
@@ -174,17 +183,35 @@ def generate_csv_suitecrm(corpus):
             "People ID",
             "Visibility",
         ]
+
         writer = csv.DictWriter(fh, field_names)
         writer.writeheader()
         for id in corpus.datasets:
             dataset = corpus.datasets[id]
+
+            url_change_dates = []
+            metadata_change_dates = []
+            for action_id in itertools.filterfalse(
+                lambda x: corpus.dataset_actions[x].dataset_id != id, corpus.dataset_actions
+            ):
+                if corpus.dataset_actions[action_id].action == "update_url":
+                    url_change_dates.append(corpus.dataset_actions[action_id].created)
+                if corpus.dataset_actions[action_id].action == "update_metadata":
+                    metadata_change_dates.append(corpus.dataset_actions[action_id].created)
+            last_url_change = ""
+            if len(url_change_dates) > 0:
+                last_url_change = max(url_change_dates).strftime("%Y-%m-%d %H:%M:%S")
+            last_metadata_change = ""
+            if len(metadata_change_dates) > 0:
+                last_metadata_change = max(metadata_change_dates).strftime("%Y-%m-%d %H:%M:%S")
+
             data = {
                 "ID": id,
                 "Name": dataset.title,
                 "Date Created": dataset.created.strftime("%Y-%m-%d %H:%M:%S"),
                 "Licence ID for the dataset": dataset.license_id,
-                "URL Update Date": "",
-                "Metadata Update Date": "",
+                "URL Update Date": last_url_change,
+                "Metadata Update Date": last_metadata_change,
                 "Short name for the dataset": dataset.short_name,
                 "Source type": dataset.source_type,
                 "Dataset URL": dataset.url,
@@ -194,6 +221,8 @@ def generate_csv_suitecrm(corpus):
             }
             writer.writerow(data)
 
+
+def generate_csv_suitecrm_org_actions(corpus):
     with open("suitecrm_org_actions.csv", "w") as fh:
         field_names = [
             "ID",
@@ -217,6 +246,8 @@ def generate_csv_suitecrm(corpus):
             }
             writer.writerow(data)
 
+
+def generate_csv_suitecrm_dataset_actions(corpus):
     with open("suitecrm_dataset_actions.csv", "w") as fh:
         field_names = [
             "ID",
