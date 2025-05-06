@@ -295,3 +295,10 @@ num_pareto_alpha = 2.0
 [actions.user_agents]
 "Register Your Data" = 1000
 "Some Third Party Tool" = 1000
+
+# Visiblity-related actions - what is the chance that a dataset
+# has changes to its visibility, and then what is the change period.
+[actions.visibility]
+[actions.visibility.activity]
+chance = 15
+period = 360

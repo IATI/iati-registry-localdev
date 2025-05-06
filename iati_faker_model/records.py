@@ -202,6 +202,7 @@ class FakeDataset:
         self.source_type = ""
         self.title = ""
         self.url = ""
+        self.visibility = ""
 
     def __str__(self):
         return (
