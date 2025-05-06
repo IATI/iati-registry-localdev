@@ -1,6 +1,7 @@
 """Tool to generate a fake IATI corpus for development and testing purposes"""
 
 import argparse
+import csv
 import json
 
 from iati_faker_model import FakeCorpus
@@ -70,70 +71,162 @@ def main():
 
 def generate_csv_suitecrm(corpus):
     with open("suitecrm_orgs.csv", "w") as fh:
-        fh.write(
-            '"Name","ID","Website","Description","Date Created","Short Name","Data Portal URL",'
-            '"Reporting Source Type","HQ Country","Default Publishing Licence","IATI Organisation Type",'
-            '"IATI Identifier","Address","Exclusions Policy URL","Email Address",'
-            '"Office Phone","Fax","Approved to publish"\n'
-        )
+        field_names = [
+            "ID",
+            "Name",
+            "Website",
+            "Description",
+            "Date Created",
+            "Short Name",
+            "Data Portal URL",
+            "Reporting Source Type",
+            "HQ Country",
+            "Default Publishing Licence",
+            "IATI Organisation Type",
+            "IATI Identifier",
+            "Address",
+            "Exclusions Policy URL",
+            "Email Address",
+            "Office Phone",
+            "Fax",
+            "Approved to publish",
+        ]
+        writer = csv.DictWriter(fh, field_names)
+        writer.writeheader()
         for id in corpus.orgs:
             org = corpus.orgs[id]
-            created = org.created.strftime("%Y-%m-%d %H:%M:%S")
-            fh.write(f'"{org.name}",{id},{org.url},"{org.description}",{created},{org.short_name},{org.ui_url},')
-            fh.write(f'"{org.source_type}","{org.country}","{org.default_license_id}","{org.org_type}",')
-            fh.write(f'{org.iati_id},"{org.address}",{org.exclusions_url},{org.contact_email},')
-            fh.write(f'{org.phone},{org.fax},{"1" if org.is_reporter else "0"}\n')
+            data = {
+                "ID": id,
+                "Name": org.name,
+                "Website": org.url,
+                "Description": org.description,
+                "Date Created": org.created.strftime("%Y-%m-%d %H:%M:%S"),
+                "Short Name": org.short_name,
+                "Data Portal URL": org.ui_url,
+                "Reporting Source Type": org.source_type,
+                "HQ Country": org.country,
+                "Default Publishing Licence": org.default_license_id,
+                "IATI Organisation Type": org.org_type,
+                "IATI Identifier": org.iati_id,
+                "Address": org.address,
+                "Exclusions Policy URL": org.exclusions_url,
+                "Email Address": org.contact_email,
+                "Office Phone": org.phone,
+                "Fax": org.fax,
+                "Approved to publish": "1" if org.is_reporter else "0",
+            }
+            writer.writerow(data)
 
     with open("suitecrm_people.csv", "w") as fh:
-        fh.write(
-            '"Last Name","ID","Email Address","Date Created","In-Person Name",'
-            '"Preferred Language","Country","Online Name","Mailing List Subscriber","Organisation ID"\n'
-        )
+        field_names = [
+            "ID",
+            "Last Name",
+            "Email Address",
+            "Date Created",
+            "In-Person Name",
+            "Preferred Language",
+            "Country",
+            "Online Name",
+            "Mailing List Subscriber",
+            "Organisation ID",
+        ]
+        writer = csv.DictWriter(fh, field_names)
+        writer.writeheader()
         for id in corpus.people:
             person = corpus.people[id]
-            person_org_id = ""
-            created = person.created.strftime("%Y-%m-%d %H:%M:%S")
-            if len(corpus.people_org_mapping[id]) > 0:
-                person_org_id = corpus.people_org_mapping[id][0]
-            fh.write(f'"{person.name}",{id},{person.email},{created},')
-            fh.write(f'"{person.in_person_name}",{person.preferred_language},')
-            fh.write(f"{person.country_code},{person.online_name},")
-            fh.write(f'"{1 if person.mailing_list else 0}", {person_org_id}\n')
+            person_org_id = corpus.people_org_mapping[id][0] if len(corpus.people_org_mapping[id]) > 0 else ""
+            data = {
+                "ID": id,
+                "Last Name": person.name,
+                "Email Address": person.email,
+                "Date Created": person.created.strftime("%Y-%m-%d %H:%M:%S"),
+                "In-Person Name": person.in_person_name,
+                "Preferred Language": person.preferred_language,
+                "Country": person.country_code,
+                "Online Name": person.online_name,
+                "Mailing List Subscriber": 1 if person.mailing_list else 0,
+                "Organisation ID": person_org_id,
+            }
+            writer.writerow(data)
 
     with open("suitecrm_datasets.csv", "w") as fh:
-        fh.write(
-            '"Name","ID","Date Created","Licence ID for the dataset","URL Update Date","Metadata Update Date",'
-            '"Short name for the dataset","Source type","Dataset URL","Organisation ID","People ID"\n'
-        )
+        field_names = [
+            "ID",
+            "Name",
+            "Date Created",
+            "Licence ID for the dataset",
+            "URL Update Date",
+            "Metadata Update Date",
+            "Short name for the dataset",
+            "Source type",
+            "Dataset URL",
+            "Organisation ID",
+            "People ID",
+        ]
+        writer = csv.DictWriter(fh, field_names)
+        writer.writeheader()
         for id in corpus.datasets:
             dataset = corpus.datasets[id]
-            created = dataset.created.strftime("%Y-%m-%d %H:%M:%S")
-            fh.write(f'"{dataset.title}",{id},')
-            fh.write(f'{created},{dataset.license_id},"","",')
-            fh.write(f'"{dataset.short_name}",{dataset.source_type},{dataset.url},')
-            fh.write(f"{dataset.reporting_org_id},{dataset.creator_id}\n")
+            data = {
+                "ID": id,
+                "Name": dataset.title,
+                "Date Created": dataset.created.strftime("%Y-%m-%d %H:%M:%S"),
+                "Licence ID for the dataset": dataset.license_id,
+                "URL Update Date": "",
+                "Metadata Update Date": "",
+                "Short name for the dataset": dataset.short_name,
+                "Source type": dataset.source_type,
+                "Dataset URL": dataset.url,
+                "Organisation ID": dataset.reporting_org_id,
+                "People ID": dataset.creator_id,
+            }
+            writer.writerow(data)
 
     with open("suitecrm_org_actions.csv", "w") as fh:
-        fh.write('"ID","Date Created","Action Type","User Application","Changed By Id","Changed Organisation Id"\n')
+        field_names = [
+            "ID",
+            "Date Created",
+            "Action Type",
+            "User Application",
+            "Changed By Id",
+            "Changed Organisation Id",
+        ]
+        writer = csv.DictWriter(fh, field_names)
+        writer.writeheader()
         for id in corpus.org_actions:
             action = corpus.org_actions[id]
-            created = action.created.strftime("%Y-%m-%d %H:%M:%S")
-            fh.write(
-                f'{id},{action.created},"{action.action}","{action.user_agent}",'
-                f"{action.person_id},{action.reporting_org_id}\n"
-            )
+            data = {
+                "ID": id,
+                "Date Created": action.created.strftime("%Y-%m-%d %H:%M:%S"),
+                "Action Type": action.action,
+                "User Application": action.user_agent,
+                "Changed By Id": action.person_id,
+                "Changed Organisation Id": action.reporting_org_id,
+            }
+            writer.writerow(data)
 
     with open("suitecrm_dataset_actions.csv", "w") as fh:
-        fh.write(
-            '"ID","Date Created","Action Type","User Application","Action Performed By Id","Dataset Changed Id"\n'
-        )
+        field_names = [
+            "ID",
+            "Date Created",
+            "Action Type",
+            "User Application",
+            "Action Performed By Id",
+            "Dataset Changed Id",
+        ]
+        writer = csv.DictWriter(fh, field_names)
+        writer.writeheader()
         for id in corpus.dataset_actions:
             action = corpus.dataset_actions[id]
-            created = action.created.strftime("%Y-%m-%d %H:%M:%S")
-            fh.write(
-                f'{id},{action.created},"{action.action}","{action.user_agent}",'
-                f"{action.person_id},{action.dataset_id}\n"
-            )
+            data = {
+                "ID": id,
+                "Date Created": action.created.strftime("%Y-%m-%d %H:%M:%S"),
+                "Action Type": action.action,
+                "User Application": action.user_agent,
+                "Action Performed By Id": action.person_id,
+                "Dataset Changed Id": action.dataset_id,
+            }
+            writer.writerow(data)
 
 
 def generate_identity_migration(corpus):
