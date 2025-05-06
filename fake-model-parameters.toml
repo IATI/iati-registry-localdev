@@ -291,6 +291,14 @@ num_pareto_alpha = 2.0
 ###############
 [actions]
 
+# Republishing actions for activity and org file datasets
+# happen with certain periodicity.
+[actions.republish.activity]
+period = 360
+
+[actions.republish.org]
+period = 720
+
 # Weights for different user agents making changes to the registry.
 [actions.user_agents]
 "Register Your Data" = 1000

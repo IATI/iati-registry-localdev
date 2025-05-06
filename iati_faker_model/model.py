@@ -570,6 +570,13 @@ class FakeCorpus:
                 dataset_id,
                 "update_metadata",
             )
+            self._create_dataset_actions(
+                self.datasets[dataset_id].created,
+                self.parameters["actions"]["republish"]["org"]["period"],
+                reporting_org_id,
+                dataset_id,
+                "republish",
+            )
 
     def _create_dataset_activity(self, reporting_org_id: str):
         """Generate all the activity datasets for an organisation
@@ -641,6 +648,14 @@ class FakeCorpus:
                 )
                 if (len(action_ids) % 2) != 0:
                     self.datasets[dataset_id].visibility = "private"
+
+            self._create_dataset_actions(
+                self.datasets[dataset_id].created,
+                self.parameters["actions"]["republish"]["activity"]["period"],
+                reporting_org_id,
+                dataset_id,
+                "republish",
+            )
 
     def _create_dataset_actions(
         self, start_date: datetime, period: float, reporting_org_id: str, dataset_id: str, action_type: str
