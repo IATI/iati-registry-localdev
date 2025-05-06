@@ -90,11 +90,15 @@ def generate_csv_suitecrm(corpus):
             "Office Phone",
             "Fax",
             "Approved to publish",
+            "First Publishing Date",
         ]
         writer = csv.DictWriter(fh, field_names)
         writer.writeheader()
         for id in corpus.orgs:
             org = corpus.orgs[id]
+            first_publish_date = min(
+                [corpus.datasets[x].created for x in org.datasets]
+                ).strftime("%Y-%m-%d %H:%M:%S") if len(org.datasets) > 0 else ""
             data = {
                 "ID": id,
                 "Name": org.name,
@@ -114,7 +118,9 @@ def generate_csv_suitecrm(corpus):
                 "Office Phone": org.phone,
                 "Fax": org.fax,
                 "Approved to publish": "1" if org.is_reporter else "0",
+                "First Publishing Date": first_publish_date
             }
+
             writer.writerow(data)
 
     with open("suitecrm_people.csv", "w") as fh:
