@@ -33,6 +33,14 @@ source_types = {primary_source = 1744, secondary_source = 30}
 # Period over which organisation data is typically updated in the CRM (not an org XML file).
 update_period =  365.0
 
+# We model that some proportion of organisations will be multilaterials
+# and a region code will be more appropriate.  We express this as a
+# multilaterial chance.  For simplicity, at the moment, the model will
+# simply use a single region with a single locale for all multilaterals
+# rrather than add complication of randomly selecting a region and
+# relevant locale(s).
+multilateral_chance = 5
+
 #
 # These weights control how often different countries will appear in the fake corpus.
 #

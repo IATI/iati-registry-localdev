@@ -91,6 +91,7 @@ def generate_csv_suitecrm(corpus):
             "Fax",
             "Approved to publish",
             "First Publishing Date",
+            "Region"
         ]
         writer = csv.DictWriter(fh, field_names)
         writer.writeheader()
@@ -108,7 +109,7 @@ def generate_csv_suitecrm(corpus):
                 "Short Name": org.short_name,
                 "Data Portal URL": org.ui_url,
                 "Reporting Source Type": org.source_type,
-                "HQ Country": org.country,
+                "HQ Country": org.country if org.region=="" else "",
                 "Default Publishing Licence": org.default_license_id,
                 "IATI Organisation Type": org.org_type,
                 "IATI Identifier": org.iati_id,
@@ -118,7 +119,8 @@ def generate_csv_suitecrm(corpus):
                 "Office Phone": org.phone,
                 "Fax": org.fax,
                 "Approved to publish": "1" if org.is_reporter else "0",
-                "First Publishing Date": first_publish_date
+                "First Publishing Date": first_publish_date,
+                "Region": org.region
             }
 
             writer.writerow(data)

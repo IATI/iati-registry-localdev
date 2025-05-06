@@ -389,13 +389,21 @@ class FakeCorpus:
         # Create the bare bones of the organisation.
         org_creation_date = self.faker.date_time_between(self.parameters["start_date"], self.parameters["end_date"])
 
+        # If this is an org with an hq country then we just pick a random locale.  But, instead,
+        # if this is a multilaterial with no fixed country then for simplicity we just set this
+        # to 489 (South America) and set the locale to es_CO.
         locale = self._random_locale()
+        region = ""
+        if self.faker.boolean(chance_of_getting_true=self.parameters["orgs"]["multilateral_chance"]):
+            locale = "es_CO"
+            region = "489"
 
         admin_person_creation_date = self.faker.date_time_between(
             org_creation_date - timedelta(days=28), org_creation_date
         )
         admin_person_id = self.generate_fake_person("admin", admin_person_creation_date, locale)
         org_id = self.generate_fake_org(org_creation_date, locale, make_reporting=is_reporting_org)
+        self.orgs[org_id].region = region
         self.orgs[org_id].grow(admin_person_id, "admin")
         self.org_actions[self._random_uuid(self.rnd)] = FakeOrgAction(
             org_id, admin_person_id, org_creation_date, "Create", self._random_user_agent()
