@@ -65,9 +65,9 @@ options:
   --safe-emails bool  Generate safe email addresses
   --safe-urls bool    Generate safe urls
   --fake-uuids bool   Generate clearly fake UUIDs for records
-``` 
+```
 
-The `--safe-emails` and `--safe-urls` options will only generate from domains such as `example.org` to avoid the risk of traffic being sent to real URLs or email addresses in testing, and `--fake-uuids` will generate UUIDs with the first 8 characters set to a string to facilitate testing.
+The `--safe-emails` and `--safe-urls` options will only generate from domains such as `example.org` to avoid the risk of traffic being sent to real URLs or email addresses in testing, and `--fake-uuids` will generate UUIDs with the first 8 characters set to a string so we can easily detect if UUIDs generated in the faker are discarded on import to external tools such as SuiteCRM.
 
 ### Configuration
 
@@ -152,6 +152,8 @@ $$
 
 where $t$ is the time at any point after organisation creation and $\tau$ is the timescale over which the organisation grows, a larger number means the organisation grows more slowly.  The growth timescale is drawn from a uniform distribution with minimum and maximum values set by the `orgs.growth_timescale_min` and `orgs.growth_timescale_max` parameters.  The maximum final size of an organisation, $N_\mathrm{max}$, is determined by a weighted distribution controlled by `orgs.by_final_size.sizes` and `orgs.by_final_size.weights`.  The organisation creation date, $t_{0,\mathrm{org}}$ is drawn from a uniform distribution between user-selectable start and end dates.
 
+Some organisations may be multilaterals with no clearly defined country, but who are based in a region.  The chance of this is controlled with `orgs.multilateral_chance`.  This is treated very simply at this point.  Multilateral regions are set to `489` and the locale set to `es_CO` to generate names, phone numbers etc. that are appropriate for the South American region (rather than simply setting to `en_GB` or similar).  This is done to test this behaviour but without going into any modelling and randomisation for regions and the countries that are grouped into these regions.  This is left for future work and could be achieved by using the [codelists held by the OECD](https://www.oecd.org/en/data/insights/data-explainers/2024/10/resources-for-reporting-development-finance-statistics.html) and refactoring how locales are generated for people to make them different than their organisation.
+
 **Note** that it is possible for an organisation with $N_\mathrm{people}=11$ to be created a day before the end date of the model and so all the people in the organisation will all be added in the last day of the model.
 
 Other random data, such as addresses, email addresses, phone numbers, text strings, organisation names, names of people and son on, is generated using [Faker](https://faker.readthedocs.io/en/master/.
@@ -164,7 +166,7 @@ Other random data, such as addresses, email addresses, phone numbers, text strin
 
 #### People
 
-When a person is created they are automatically setup with a leaving date.  This is controlled with *waiting times* specified in `users.leaving_waiting_times` given separately (in days) for admin, editor and member capacities.  The exact date is determined by randomly selecting a number of days from an exponential distribution parameterised by the reciprocal of the waiting time (to give a rate at which people leave organisations).  Whether or not a person has signed up to the IATI mailing list is determined by the `users.mailing_list_chance` parameter.
+When a person is created they are automatically setup with a leaving date.  This is controlled with *waiting times* specified in `users.leaving_waiting_times` given separately (in days) for admin, editor and member capacities.  The exact date is determined by randomly selecting a number of days from an exponential distribution parameterised by the reciprocal of the waiting time (to give a rate at which people leave organisations).  Whether or not a person has signed up to the IATI mailing list is determined by the `users.mailing_list_chance` parameter.  Time zones are set based on the person's country.  First registration use cases are set randomly from a pre-set list.
 
 ### Datasets
 
@@ -178,13 +180,15 @@ The number of activity datasets per organisation is drawn from a complicated com
 
 ### Actions
 
-Five types of actions are modelled:
+Seven types of actions are modelled:
 
 1. Creation of organisations.
 2. Creation of datasets.
 3. Changes to organisation metadata.
 4. Changes to dataset metadata.
 5. Changes to an activity dataset URL.
+6. Republishing an activity or organisation dataset.
+7. Changing the visibility of an activity dataset.
 
 Creation actions are associated with a randomly selected member of the organisation (admin or editor) and making sure they were a member of the organisation at the time the dataset was created.
 
@@ -205,6 +209,14 @@ The average update period for organisation and activity datasets is stored in th
 1. Selects a change date from a uniform distribution between the dataset creation date and the end date of the model.
 2. Randomly selects a member of the organisation (admin or editor) to have made the change (making sure they were a member of the organisation at the time the change was made).
 3. Creates an action with a randomly selected user agent (tooling that was used to make the change) - the weights for these are controlled with `actions.user_agents`.  Organisation datasets only record `update_metadata` actions, but for activity datasets we also allow the URL to be updated, and this is randomly determined using `datasets.activity.url_update_chance`, if the URL is updated then the `update_url` action is recorded, otherwise we record `update_metadata`.
+
+#### Visibility changes for activity datasets
+
+By default datasets start out as public and we model changes in visibility as a toggle.  Whether a given activity dataset will have any visibility changes at all is controlled by `actions.visibility.activity.chance` and then with a period of `actions.visibility.activity.period`.  When these actions are generated the final status of the dataset is set to either public or private depending on whether the number of visibility changes was even or odd.
+
+#### Republishing
+
+Republishing actions are generated randomly for activity and organisation files with periods controlled by `actions.republish.activity.period` and `actions.republish.org.period`.
 
 
 ## License
