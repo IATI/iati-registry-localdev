@@ -8,23 +8,28 @@ import uuid
 from datetime import datetime, timedelta
 
 import faker
+import pycountry
+import pytz
 
 from .random import org_id, pareto, poisson, uniform_dates, uuid4
 from .records import FakeDataset, FakeDatasetAction, FakeOrg, FakeOrgAction, FakePerson
 
-# Get a mapping from countries to locales.
+# Get a mapping from countries to locales.  We manually remove
+# "dk_DK" as dk does not seem to be an ISO 639-1 language code.
 COUNTRY_LOCALE_MAPPING = {}
 for locale in faker.config.AVAILABLE_LOCALES:
-    if len(locale) > 2:
-        country = locale[3:]
-        if country not in COUNTRY_LOCALE_MAPPING.keys():
-            COUNTRY_LOCALE_MAPPING[country] = []
-        COUNTRY_LOCALE_MAPPING[country].append(locale)
+    if locale[:2] != "dk":
+        if len(locale) > 2:
+            country = locale[3:]
+            if country not in COUNTRY_LOCALE_MAPPING.keys():
+                COUNTRY_LOCALE_MAPPING[country] = []
+            COUNTRY_LOCALE_MAPPING[country].append(locale)
 
 
 class FakeCorpus:
 
     CAPACITY_CHOICES = ["admin", "editor", "member"]
+    FIRST_REGISTRATION_USE_CASE_CHOICES = ["reporting", "membership", "api_access", "community"]
 
     def __init__(
         self,
@@ -50,36 +55,7 @@ class FakeCorpus:
             Generate fake UUIDs that can be clearly spotted as fake.
         """
 
-        # Load the model parameters.
-        try:
-            fh = open(parameters_filename, "rb")
-            self.parameters = tomllib.load(fh)
-        except Exception as err:
-            print(f"Cannot load parameters TOML file: {err}")
-            raise
-
-        # Unpack some of the model parameters - these are mostly dictionaries
-        # that need separating into two lists for calling random.choices().
-        self.org_countries = list(self.parameters["orgs"]["countries"].keys())
-        self.org_country_weights = list(self.parameters["orgs"]["countries"].values())
-        self.default_licenses = list(self.parameters["orgs"]["licenses"].keys())
-        self.default_license_weights = list(self.parameters["orgs"]["licenses"].values())
-        self.source_types = list(self.parameters["orgs"]["source_types"].keys())
-        self.source_type_weights = list(self.parameters["orgs"]["source_types"].values())
-        self.org_types = list(self.parameters["orgs"]["types"].keys())
-        self.org_type_weights = list(self.parameters["orgs"]["types"].values())
-        self.capacity_weights = {
-            index + 1: [x["admin"], x["editor"], x["member"]]
-            for index, x in enumerate(self.parameters["orgs"]["by_final_size"]["capacity_weights"])
-        }
-        self.num_activity_dataset_choices = [0, 1, ">1"]
-        self.num_activity_dataset_weights = [
-            self.parameters["datasets"]["activity"]["num_weight_zero"],
-            self.parameters["datasets"]["activity"]["num_weight_one"],
-            self.parameters["datasets"]["activity"]["num_weight_twoormore"],
-        ]
-        self.user_agents = list(self.parameters["actions"]["user_agents"].keys())
-        self.user_agent_weights = list(self.parameters["actions"]["user_agents"].values())
+        self._load_and_process_config(parameters_filename)
 
         # This is where we store the corpus.
         self.orgs = collections.OrderedDict({})
@@ -111,6 +87,53 @@ class FakeCorpus:
         # Runtime options.
         self.safe_urls = safe_urls
         self.safe_emails = safe_emails
+
+    def _load_and_process_config(self, filename: str):
+        """Load the configuration TOML file and process the data
+
+        Parameters
+        ----------
+        filename : str
+            Filename to load.
+        """
+        # Load the model parameters.
+        try:
+            fh = open(filename, "rb")
+            self.parameters = tomllib.load(fh)
+        except Exception as err:
+            print(f"Cannot load parameters TOML file: {err}")
+            raise
+
+        # Remove countries from the configuration for which there isn't a Faker provider.
+        countries_to_remove = []
+        for country_code in self.parameters["orgs"]["countries"]:
+            if country_code not in COUNTRY_LOCALE_MAPPING:
+                countries_to_remove.append(country_code)
+        [self.parameters["orgs"]["countries"].pop(x) for x in countries_to_remove]
+        print("Countries not available in faker removed: ", countries_to_remove)
+
+        # Unpack some of the model parameters - these are mostly dictionaries
+        # that need separating into two lists for calling random.choices().
+        self.org_countries = list(self.parameters["orgs"]["countries"].keys())
+        self.org_country_weights = list(self.parameters["orgs"]["countries"].values())
+        self.default_licenses = list(self.parameters["orgs"]["licenses"].keys())
+        self.default_license_weights = list(self.parameters["orgs"]["licenses"].values())
+        self.source_types = list(self.parameters["orgs"]["source_types"].keys())
+        self.source_type_weights = list(self.parameters["orgs"]["source_types"].values())
+        self.org_types = list(self.parameters["orgs"]["types"].keys())
+        self.org_type_weights = list(self.parameters["orgs"]["types"].values())
+        self.capacity_weights = {
+            index + 1: [x["admin"], x["editor"], x["member"]]
+            for index, x in enumerate(self.parameters["orgs"]["by_final_size"]["capacity_weights"])
+        }
+        self.num_activity_dataset_choices = [0, 1, ">1"]
+        self.num_activity_dataset_weights = [
+            self.parameters["datasets"]["activity"]["num_weight_zero"],
+            self.parameters["datasets"]["activity"]["num_weight_one"],
+            self.parameters["datasets"]["activity"]["num_weight_twoormore"],
+        ]
+        self.user_agents = list(self.parameters["actions"]["user_agents"].keys())
+        self.user_agent_weights = list(self.parameters["actions"]["user_agents"].values())
 
     def _random_locale(self) -> str:
         """Randomly select a locale
@@ -225,15 +248,22 @@ class FakeCorpus:
         while len(short_user_name) < 6:
             short_user_name += self.faker["en_GB"].words(1)[0]
         person.short_user_name = short_user_name
-
         person.name = self.faker[locale].name()
         person.in_person_name = self.faker[locale].first_name()
         person.online_name = person.in_person_name
-        person.preferred_language = locale[:2]
-        person.country = locale[3:]
+
+        person.preferred_language = pycountry.languages.get(alpha_2=locale[:2]).name
+        person.country_code = locale[3:]
+        person.country = pycountry.countries.get(alpha_2=person.country_code).name
+        person.locale = locale
+        person.time_zone = self.rnd.choice(pytz.country_timezones[person.country_code])
+
         person.email = self.faker[locale].ascii_safe_email() if self.safe_emails else self.faker[locale].ascii_email()
         person.mailing_list = self.faker.boolean(
             chance_of_getting_true=self.parameters["users"]["mailing_list_chance"]
+        )
+        person.first_registration_use_cases = self.rnd.sample(
+            self.FIRST_REGISTRATION_USE_CASE_CHOICES, k=self.rnd.randint(0, 3)
         )
 
         self.people_org_mapping[id] = []
@@ -267,10 +297,13 @@ class FakeCorpus:
         org.country = locale[3:]
         if self.faker.boolean(chance_of_getting_true=self.parameters["orgs"]["address_chance"]):
             org.address = self.faker[locale].address()
-        if self.faker.boolean(chance_of_getting_true=self.parameters["orgs"]["phone_chance"]):
-            org.phone = self.faker[locale].phone_number()
-        if self.faker.boolean(chance_of_getting_true=self.parameters["orgs"]["fax_chance"]):
-            org.fax = self.faker[locale].phone_number()
+        try:
+            if self.faker.boolean(chance_of_getting_true=self.parameters["orgs"]["phone_chance"]):
+                org.phone = self.faker[locale].phone_number()
+            if self.faker.boolean(chance_of_getting_true=self.parameters["orgs"]["fax_chance"]):
+                org.fax = self.faker[locale].phone_number()
+        except AttributeError:
+            pass
 
         if make_reporting:
             org.short_name = (org.name[:3].lower() + org.name[-3:].lower()).replace(" ", "")

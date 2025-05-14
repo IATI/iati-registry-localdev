@@ -2,12 +2,14 @@
 name = "iatifaker"
 description = "Tools for faking IATI data and injecting into the IATI Registry"
 authors = [{name="IATI Secretariat", email="support@iatistandard.org"}]
-version = "0.1.0"
+version = "0.2.0"
 requires-python = ">= 3.12.6"
 readme = "README.md"
-license = {file = "LICENSE"}
+license = {file = "LICENSE.txt"}
 dependencies = [
     "faker",
+    "pycountry",
+    "pytz"
 ]
 
 [project.optional-dependencies]

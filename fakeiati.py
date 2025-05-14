@@ -1,6 +1,7 @@
 """Tool to generate a fake IATI corpus for development and testing purposes"""
 
 import argparse
+import json
 
 from iati_faker_model import FakeCorpus
 from tqdm import tqdm
@@ -22,6 +23,13 @@ def main():
         help="Don't generate CSV files for bulk import into SuiteCRM",
     )
     parser.add_argument(
+        "--no-wso2",
+        default=False,
+        type=bool,
+        dest="no_wso2",
+        help="Don't generate JSON files for import into WSO2",
+    )
+    parser.add_argument(
         "-p",
         dest="params_filename",
         default="fake-model-parameters.toml",
@@ -33,7 +41,7 @@ def main():
     parser.add_argument("--fake-uuids", default=False, type=bool, help="Generate clearly fake UUIDs for records")
     args = parser.parse_args()
 
-    print("Setting up faker and parsing model parameter file... ", end="")
+    print("Setting up faker and parsing model parameter file")
     corpus = FakeCorpus(
         args.params_filename,
         seed=args.seed,
@@ -41,7 +49,6 @@ def main():
         safe_urls=args.safe_urls,
         fake_uuids=args.fake_uuids,
     )
-    print("done")
 
     print("Generating multi-organisation people... ", end="")
     corpus.create_multi_org_people(args.num_orgs)
@@ -53,6 +60,11 @@ def main():
     if not args.no_suitecrm:
         print("Generating CSV files for SuiteCRM... ", end="")
         generate_csv_suitecrm(corpus)
+        print("done.")
+
+    if not args.no_wso2:
+        print("Generating JSON file for WSO2... ", end="")
+        generate_identity_migration(corpus)
         print("done.")
 
 
@@ -85,7 +97,7 @@ def generate_csv_suitecrm(corpus):
                 person_org_id = corpus.people_org_mapping[id][0]
             fh.write(f'"{person.name}",{id},{person.email},{created},')
             fh.write(f'"{person.in_person_name}",{person.preferred_language},')
-            fh.write(f"{person.country},{person.online_name},")
+            fh.write(f"{person.country_code},{person.online_name},")
             fh.write(f'"{1 if person.mailing_list else 0}", {person_org_id}\n')
 
     with open("suitecrm_datasets.csv", "w") as fh:
@@ -112,7 +124,9 @@ def generate_csv_suitecrm(corpus):
             )
 
     with open("suitecrm_dataset_actions.csv", "w") as fh:
-        fh.write('"ID","Date Created","Action Type","User Application","Action Performed By Id","Dataset Changed Id"\n')
+        fh.write(
+            '"ID","Date Created","Action Type","User Application","Action Performed By Id","Dataset Changed Id"\n'
+        )
         for id in corpus.dataset_actions:
             action = corpus.dataset_actions[id]
             created = action.created.strftime("%Y-%m-%d %H:%M:%S")
@@ -120,6 +134,32 @@ def generate_csv_suitecrm(corpus):
                 f'{id},{action.created},"{action.action}","{action.user_agent}",'
                 f"{action.person_id},{action.dataset_id}\n"
             )
+
+
+def generate_identity_migration(corpus):
+    data = []
+    for id in corpus.people:
+        person = corpus.people[id]
+        created = person.created.strftime("%Y-%m-%d %H:%M:%S")
+        data.append(
+            {
+                "fullName": person.name,
+                "email": person.email,
+                "created": created,
+                "crmId": id,
+                "locale": person.locale,
+                "country": person.country,
+                "timeZone": person.time_zone,
+                "userType": "reporter" if len(corpus.people_org_mapping[id]) > 0 else "standard",
+                "inPersonName": person.in_person_name,
+                "onlineName": person.online_name,
+                "mailingList": person.mailing_list,
+                "preferredLanguage": person.preferred_language,
+                "registrationUseCases": person.first_registration_use_cases,
+            }
+        )
+    with open("wso2_users.json", "w") as fh:
+        json.dump(data, fh, indent=4)
 
 
 if __name__ == "__main__":
