@@ -33,6 +33,14 @@ source_types = {primary_source = 1744, secondary_source = 30}
 # Period over which organisation data is typically updated in the CRM (not an org XML file).
 update_period =  365.0
 
+# We model that some proportion of organisations will be multilaterials
+# and a region code will be more appropriate.  We express this as a
+# multilaterial chance.  For simplicity, at the moment, the model will
+# simply use a single region with a single locale for all multilaterals
+# rrather than add complication of randomly selecting a region and
+# relevant locale(s).
+multilateral_chance = 5
+
 #
 # These weights control how often different countries will appear in the fake corpus.
 #
@@ -283,7 +291,22 @@ num_pareto_alpha = 2.0
 ###############
 [actions]
 
+# Republishing actions for activity and org file datasets
+# happen with certain periodicity.
+[actions.republish.activity]
+period = 360
+
+[actions.republish.org]
+period = 720
+
 # Weights for different user agents making changes to the registry.
 [actions.user_agents]
 "Register Your Data" = 1000
 "Some Third Party Tool" = 1000
+
+# Visiblity-related actions - what is the chance that a dataset
+# has changes to its visibility, and then what is the change period.
+[actions.visibility]
+[actions.visibility.activity]
+chance = 15
+period = 360

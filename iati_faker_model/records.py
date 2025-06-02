@@ -96,6 +96,7 @@ class FakeOrg:
         self.contact_email = ""
         self.source_type = ""
         self.country = ""
+        self.region = ""
         self.address = ""
         self.phone = ""
         self.fax = ""
@@ -201,6 +202,7 @@ class FakeDataset:
         self.source_type = ""
         self.title = ""
         self.url = ""
+        self.visibility = ""
 
     def __str__(self):
         return (

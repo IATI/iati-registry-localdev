@@ -6,6 +6,7 @@ import random
 import tomllib
 import uuid
 from datetime import datetime, timedelta
+from typing import List
 
 import faker
 import pycountry
@@ -353,6 +354,7 @@ class FakeCorpus:
         dataset.source_type = self.orgs[reporting_org_id].source_type
         dataset.title = title
         dataset.url = self._random_url(locale) + ".xml"
+        dataset.visibility = "public"
 
         self.datasets[id] = dataset
         self.orgs[reporting_org_id].datasets.append(id)
@@ -389,13 +391,21 @@ class FakeCorpus:
         # Create the bare bones of the organisation.
         org_creation_date = self.faker.date_time_between(self.parameters["start_date"], self.parameters["end_date"])
 
+        # If this is an org with an hq country then we just pick a random locale.  But, instead,
+        # if this is a multilaterial with no fixed country then for simplicity we just set this
+        # to 489 (South America) and set the locale to es_CO.
         locale = self._random_locale()
+        region = ""
+        if self.faker.boolean(chance_of_getting_true=self.parameters["orgs"]["multilateral_chance"]):
+            locale = "es_CO"
+            region = "489"
 
         admin_person_creation_date = self.faker.date_time_between(
             org_creation_date - timedelta(days=28), org_creation_date
         )
         admin_person_id = self.generate_fake_person("admin", admin_person_creation_date, locale)
         org_id = self.generate_fake_org(org_creation_date, locale, make_reporting=is_reporting_org)
+        self.orgs[org_id].region = region
         self.orgs[org_id].grow(admin_person_id, "admin")
         self.org_actions[self._random_uuid(self.rnd)] = FakeOrgAction(
             org_id, admin_person_id, org_creation_date, "Create", self._random_user_agent()
@@ -548,30 +558,25 @@ class FakeCorpus:
                 reporting_org_id,
                 self.datasets[dataset_id].creator_id,
                 self.datasets[dataset_id].created,
-                "Create",
+                "create",
                 self._random_user_agent(),
             )
 
             # Add some changes to the org file.
-            num_actions = poisson(
-                1.0 / self.parameters["datasets"]["org"]["update_period"],
-                (self.parameters["end_date"] - self.orgs[reporting_org_id].created).days,
-                self.rnd,
+            self._create_dataset_actions(
+                self.datasets[dataset_id].created,
+                self.parameters["datasets"]["org"]["update_period"],
+                reporting_org_id,
+                dataset_id,
+                "update_metadata",
             )
-            action_dates = uniform_dates(
-                num_actions, self.orgs[reporting_org_id].created, self.parameters["end_date"], self.rnd
+            self._create_dataset_actions(
+                self.datasets[dataset_id].created,
+                self.parameters["actions"]["republish"]["org"]["period"],
+                reporting_org_id,
+                dataset_id,
+                "republish",
             )
-            for this_date in action_dates:
-                action_person_id = self.find_suitable_action_person(reporting_org_id, this_date)
-
-                self.dataset_actions[self._random_uuid(self.rnd)] = FakeDatasetAction(
-                    dataset_id,
-                    reporting_org_id,
-                    action_person_id,
-                    this_date,
-                    "Update metadata",
-                    self._random_user_agent(),
-                )
 
     def _create_dataset_activity(self, reporting_org_id: str):
         """Generate all the activity datasets for an organisation
@@ -613,34 +618,90 @@ class FakeCorpus:
                 reporting_org_id,
                 self.datasets[dataset_id].creator_id,
                 self.datasets[dataset_id].created,
-                "Create",
+                "create",
                 self._random_user_agent(),
             )
 
-            # Add some updates.
-            num_actions = poisson(
-                1.0 / self.parameters["datasets"]["activity"]["update_period"],
-                (self.parameters["end_date"] - self.datasets[dataset_id].created).days,
-                self.rnd,
+            # Add some actions.
+            action_ids = self._create_dataset_actions(
+                self.datasets[dataset_id].created,
+                self.parameters["datasets"]["activity"]["update_period"],
+                reporting_org_id,
+                dataset_id,
+                "update_metadata",
             )
-            action_dates = uniform_dates(
-                num_actions, self.datasets[dataset_id].created, self.parameters["end_date"], self.rnd
-            )
-            for this_date in action_dates:
-                action_person_id = self.find_suitable_action_person(reporting_org_id, this_date)
-                update_type = "Update metadata"
+            for action_id in action_ids:
                 if self.faker.boolean(
                     chance_of_getting_true=self.parameters["datasets"]["activity"]["url_update_chance"]
                 ):
-                    update_type = "Update dataset url"
-                self.dataset_actions[self._random_uuid(self.rnd)] = FakeDatasetAction(
-                    dataset_id,
+                    self.dataset_actions[action_id].action = "update_url"
+
+            if self.faker.boolean(
+                chance_of_getting_true=self.parameters["actions"]["visibility"]["activity"]["chance"]
+            ):
+                action_ids = self._create_dataset_actions(
+                    self.datasets[dataset_id].created,
+                    self.parameters["actions"]["visibility"]["activity"]["period"],
                     reporting_org_id,
-                    action_person_id,
-                    this_date,
-                    update_type,
-                    self._random_user_agent(),
+                    dataset_id,
+                    "change_visibility",
                 )
+                if (len(action_ids) % 2) != 0:
+                    self.datasets[dataset_id].visibility = "private"
+
+            self._create_dataset_actions(
+                self.datasets[dataset_id].created,
+                self.parameters["actions"]["republish"]["activity"]["period"],
+                reporting_org_id,
+                dataset_id,
+                "republish",
+            )
+
+    def _create_dataset_actions(
+        self, start_date: datetime, period: float, reporting_org_id: str, dataset_id: str, action_type: str
+    ) -> List[str]:
+        """Create a set of activity dataset actions for a dataset
+
+        This method creates a set of activity dataset actions and adds them
+        to the records.
+
+        Parameters
+        ----------
+        start_date : datetime
+            When the dataset was created.
+        period : float
+            Period over which actions are expected.
+        reporting_org_id : str
+            Id for the reporting org.
+        dataset_id : str
+            Id for the dataset.
+
+        Returns
+        -------
+        List[str]
+            List of dataset action UUIDs.
+        """
+        num_actions = poisson(
+            1.0 / period,
+            (self.parameters["end_date"] - start_date).days,
+            self.rnd,
+        )
+        action_dates = uniform_dates(num_actions, start_date, self.parameters["end_date"], self.rnd)
+        action_ids = []
+        for this_date in action_dates:
+            action_person_id = self.find_suitable_action_person(reporting_org_id, this_date)
+            action_id = self._random_uuid(self.rnd)
+            self.dataset_actions[action_id] = FakeDatasetAction(
+                dataset_id,
+                reporting_org_id,
+                action_person_id,
+                this_date,
+                action_type,
+                self._random_user_agent(),
+            )
+            action_ids.append(action_id)
+
+        return action_ids
 
     def list_orgs(self):
         """List all the organisations in the corpus."""
