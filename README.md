@@ -6,7 +6,7 @@
 --- | ---
 Description | The (new) IATI Registry is a CIAM system using a CRM ([SuiteCRM](https://github.com/salesagility/SuiteCRM)) to store IATI organisation and dataset information, and an identity service ([WSO2](https://github.com/wso2/product-is)).  This repository contains various files to spin up a local development instance of the (new) IATI Registry and to generate fake data to put into the Registry for development and testing.  Currently this just contains the CRM component. 
 Website | None 
-Related | To test the registry you will need to install the [IATI Registry SuiteCRM Extension](https://github.com/IATI/iati-registry-suitecrm-extension).<br />To interact with the SuiteCRM API using Python there is a Python library: [IATI SuiteCRM Python Library](https://github.com/IATI/iati-registry-libsuitecrm). 
+Related | You will need a local copy of the SuiteCRM PHP files to run this development environment.<br />To interact with the SuiteCRM API using Python there is a Python library: [IATI SuiteCRM Python Library](https://github.com/IATI/iati-registry-libsuitecrm). 
 Documentation | Rest of README.md
 Technical Issues | [GitHub issues page](https://github.com/IATI/iati-registry-suitecrm-extension/issues) 
 Support | [IATI Support Website](https://iatistandard.org/en/guidance/get-support/) 
@@ -15,31 +15,96 @@ Support | [IATI Support Website](https://iatistandard.org/en/guidance/get-suppor
 
 * Docker.
 * Docker Compose.
+* openssl (or similar) to build public/private key pairs to use OAuth functionality.
 * Python (for running the faking tooling)
+* Linux (or other Unix-like) environment.
 
 ## Overview
 
+This development environment is setup to allow local development of SuiteCRM and authoring of changes to SuiteCRM that can then be committed into version control.  The system is setup so that the SuiteCRM distribution is held on the host machine, to allow local editing, committing, linting and so on, but that SuiteCRM is run in a container.  Some manual setup is required the first time the container is run.
+
 The `docker-compose.yaml` configures a CRM service and the database service that the CRM needs:
 
-1. `iati-dev-registry-crm`: [SuiteCRM](https://suitecrm.com/) is the IATI CRM.
-2. `iati-dev-registry-crm-db`: [MariaDB](https://mariadb.org/) is the store for the IATI CRM.
+1. `iati-dev-crm`: [SuiteCRM](https://suitecrm.com/) is the IATI CRM.
+2. `iati-dev-crm-db`: [MariaDB](https://mariadb.org/) is the store for the IATI CRM.
 
-At the moment the persistent data storage has been redirected to a local folder rather than use a Docker volume (see environment variables: `DB_CRM_LOCAL_PATH`, `CRM_LOCAL_PATH`).  This is to make it easier to inspect the file system during development.  It's envisaged that they would be rolled back into Docker volumes at some later stage.
+The DB is not setup through environment variables as the setup must match the SuiteCRM configuration file in `suitecrm/config_si.php`
 
 To fill the registry with mocked data, the there is a tool called `fakeiati.py` to generate a corpus of fake IATI data.  These are generated as CSV files that can be imported into SuiteCRM (with a few caveats).
 
 ## Getting started
 
-### Starting the Registry
+### Starting development of the SuiteCRM customisations
 
-From the command line issue:
+You must have a local copy of SuiteCRM, either cloned from the [SuiteCRM repository on GitHub](https://github.com/SuiteCRM/SuiteCRM), downloaded from the [SuiteCRM website](https://suitecrm.com/download/), or from the [IATI private repository](https://github.com/iati/iati-suitecrm).  For the purposes of these docs, it is assumed they are downloaded into `~/iati-suitecrm`.
+
+Copy the example `.env` file: `cp .env.example .env`.
+
+#### User and Group ID
+
+The first thing is to find your user and group id (e.g., using `id`) and set the variables `IATI_CRM_LOCALDEV_USERID` and `IATI_CRM_LOCALDEV_GROUPID` in `.env` to match.  This is so that the PHP environment in the container can properly access the SuiteCRM files on the host whilst remaining editable on the host.
+
+#### Path to the SuiteCRM files
+
+Set the `IATI_CRM_PATH` variable in `.env` to the path to the SuiteCRM files, e.g., `IATI_CRM_PATH = ~/iati-suitecrm/`.
+
+#### Set passwords
+
+If necessary, change the DB passwords in `docker-compose.yaml` and `suitecrm/config_si.php`.
+
+#### Public/private keys
+
+A public/private key pair is required if you want to interact with SuiteCRM using OAuth.  If so, execute the following in the root of this repository:
 
 ```
-cp .env.example .env
-docker compose up
+openssl genrsa -out suitecrm/private.key 2048
+openssl rsa -in suitecrm/private.key -pubout -out suitecrm/public.key
+chmod 600 suitecrm/private.key suitecrm/public.key
 ```
 
-Then you will need to fetch the [IATI Registry extension for SuiteCRM](https://github.com/IATI/iati-registry-suitecrm-extension) and install the zip file via the *Module Loader* section in the *Admin* section.  If you are opening your instance to the outside world it is recommended to change the default passwords in `.env`.
+#### Start the container and install requirements
+
+Now start the docker container (I normally force docker to rebuild the image the first time).  This may take some time if it's the first time as the container needs to build a number of PHP extensions.
+
+```
+docker compose up --build
+```
+
+As soon as the container is up, the second command installs all the dependencies using Composer.
+
+```
+docker exec iati-dev-crm composer install
+```
+
+Alternatively, `composer install` could be run after logging into the container with `docker exec -it iati-dev-crm bash`.
+
+#### SuiteCRM Install
+
+The final step is for SuiteCRM to install itself (setup local configuration files, build the database tables and so on).  The `suitecrm/config_si.php` file contains the configuration information to allow SuiteCRM to do this (see also [documentation on the SugarCRM website](https://support.sugarcrm.com/documentation/sugar_developer/sugar_developer_guide_13.0/architecture/configurator/silent_installer_settings/) and [a blog post](https://www.jsmackin.co.uk/suitecrm/suitecrm-command-line-install/)).  The installer can be run from the browser by opening `http://localhost:8080/install.php` or from the command line:
+
+```
+docker exec iati-dev-crm curl localhost:80/install.php?goto=SilentInstall&cli=true
+```
+
+You will see some warnings but they should not stop the installation from completing with:
+
+```
+<!--
+<bottle>Success!</bottle>
+-->
+```
+
+After this SuiteCRM is installed and you can log in by opening `http://localhost:8080` using the admin username and password as configured in `suitecrm/config_si.php`.
+
+### Linting of the SuiteCRM code
+
+As you are carrying out local development on the SuiteCRM files, you can lint the code using:
+
+```
+docker run -v ~/iati-suitecrm:/code ghcr.io/php-cs-fixer/php-cs-fixer:3-php8.3 fix
+```
+
+The file `.php-cs-fixer.dist.php` in the SuiteCRM root contains the configuration for this linter.
 
 ### Generating fake data
 
@@ -69,16 +134,7 @@ options:
 
 The `--safe-emails` and `--safe-urls` options will only generate from domains such as `example.org` to avoid the risk of traffic being sent to real URLs or email addresses in testing, and `--fake-uuids` will generate UUIDs with the first 8 characters set to a string so we can easily detect if UUIDs generated in the faker are discarded on import to external tools such as SuiteCRM.
 
-### Configuration
-
-The services are configured using environment variables in `.env` and an example is provided `.env.example`.  If this service is
-to be open to the outside world it is recommended to change the passwords.  The passwords that need to be set are:
-
-* `DB_CRM_PASS`: password to access the CRM database.
-* `DB_CRM_ROOT_PASSWORD`: root password for the CRM database.
-* `CRM_PASS`: password for the admin account of the CRM.
-
-### Development
+### Faker Development
 
 #### Checking and linting
 
