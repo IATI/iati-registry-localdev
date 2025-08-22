@@ -1,6 +1,8 @@
 # Local storage for registry and local setup
 data/
 .env
+suitecrm/private.key
+suitecrm/public.key
 
 # Python environments
 .ve/

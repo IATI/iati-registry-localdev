@@ -1,0 +1,42 @@
+<?php
+
+$sugar_config_si = array(
+    /*
+    ** System setup.
+    */
+    'setup_system_name' => 'IATI CRM',
+    'setup_site_url' => 'localhost:8080',
+    'setup_site_admin_user_name' => 'admin',
+    'setup_site_admin_password' => 'password',
+    'setup_db_pop_demo_data' => false,
+
+    /*
+    ** Database settings.
+    */
+    'setup_db_type' => 'mysql',
+    'setup_db_host_name' => 'iati-dev-crm-db',
+    'setup_db_port_num' => 3306,
+    'setup_db_database_name' => 'suitecrm',
+    'setup_db_admin_user_name' => 'suitecrm_admin',
+    'setup_db_admin_password' => 'saO7tXCBTsxDjcz1',
+    'setup_db_create_database' => 1,
+    'setup_db_drop_tables' => 0,
+    'setup_db_username_is_privileged' => true,
+    'dbUSRData' => 'create',
+
+    /*
+    ** Default locale settings.
+    */
+    'export_delimiter' => ',',
+    'default_export_charset' => 'ISO-8859-1',
+    'default_currency_iso4217' => 'USD',
+    'default_currency_name' => 'US Dollar',
+    'default_currency_significant_digits' => '2',
+    'default_currency_symbol' => '$',
+    'default_language' => 'en_us',
+    'default_date_format' => 'Y-m-d',
+    'default_time_format' => 'H:i',
+    'default_decimal_seperator' => '.',
+    'default_number_grouping_seperator' => ',',
+    'default_locale_name_format' => 's f l',
+);
