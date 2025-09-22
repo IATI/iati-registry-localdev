@@ -9,6 +9,7 @@ $sugar_config_si = array(
     'setup_site_admin_user_name' => 'admin',
     'setup_site_admin_password' => 'password',
     'setup_db_pop_demo_data' => false,
+    'setup_site_log_level' => 'warn',
 
     /*
     ** Database settings.

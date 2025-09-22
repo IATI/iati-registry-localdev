@@ -1,5 +1,14 @@
 --- php.ini-development	2025-08-04 20:58:07.000000000 +0000
-+++ php.ini	2025-08-11 13:58:07.213990563 +0000
++++ php.ini	2025-09-16 13:34:18.447604962 +0000
+@@ -430,7 +430,7 @@
+ 
+ ; Maximum amount of memory a script may consume
+ ; https://php.net/memory-limit
+-memory_limit = 128M
++memory_limit = 512M
+ 
+ ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ ; Error handling and logging ;
 @@ -486,7 +486,7 @@
  ; Development Value: E_ALL
  ; Production Value: E_ALL & ~E_DEPRECATED & ~E_STRICT
